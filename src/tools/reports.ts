@@ -55,6 +55,10 @@ export const getSearchTermReportsSchema = baseReportSchema.extend({
   campaignId: z.number().describe("Campaign ID"),
 });
 
+export const getAdReportsSchema = baseReportSchema.extend({
+  campaignId: z.number().describe("Campaign ID"),
+});
+
 // ============================================
 // Tool Definitions
 // ============================================
@@ -253,6 +257,51 @@ export const reportToolDefinitions = [
       required: ["campaignId", "startTime", "endTime"],
     },
   },
+  {
+    name: "get_ad_reports",
+    description: "Get ad-level performance reports for a campaign. Shows metrics per ad (creative assignment).",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        campaignId: { type: "number", description: "Campaign ID" },
+        startTime: { type: "string", description: "Start date (yyyy-mm-dd)" },
+        endTime: { type: "string", description: "End date (yyyy-mm-dd)" },
+        selector: {
+          type: "object",
+          description: "Optional filter and pagination settings",
+          properties: {
+            conditions: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  field: { type: "string" },
+                  operator: { type: "string", enum: ["EQUALS", "IN", "STARTSWITH"] },
+                  values: { type: "array", items: { type: "string" } },
+                },
+                required: ["field", "operator", "values"],
+              },
+            },
+            orderBy: {
+              type: "object",
+              properties: {
+                field: { type: "string" },
+                sortOrder: { type: "string", enum: ["ASCENDING", "DESCENDING"] },
+              },
+            },
+            limit: { type: "number" },
+            offset: { type: "number" },
+          },
+        },
+        timeZone: { type: "string", enum: ["ORTZ", "UTC"] },
+        granularity: { type: "string", enum: ["HOURLY", "DAILY", "WEEKLY", "MONTHLY"] },
+        returnRowTotals: { type: "boolean" },
+        returnGrandTotals: { type: "boolean" },
+        returnRecordsWithNoMetrics: { type: "boolean" },
+      },
+      required: ["campaignId", "startTime", "endTime"],
+    },
+  },
 ];
 
 // ============================================
@@ -340,5 +389,14 @@ export async function handleGetSearchTermReports(
 ): Promise<string> {
   const params = buildReportParams(args) as Parameters<typeof client.getSearchTermReports>[1];
   const result = await client.getSearchTermReports(args.campaignId, params);
+  return JSON.stringify(result, null, 2);
+}
+
+export async function handleGetAdReports(
+  client: AppleAdsClient,
+  args: z.infer<typeof getAdReportsSchema>
+): Promise<string> {
+  const params = buildReportParams(args) as Parameters<typeof client.getAdReports>[1];
+  const result = await client.getAdReports(args.campaignId, params);
   return JSON.stringify(result, null, 2);
 }

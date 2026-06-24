@@ -72,11 +72,61 @@ import {
   handleGetAdGroupReports,
   handleGetKeywordReports,
   handleGetSearchTermReports,
+  handleGetAdReports,
   getCampaignReportsSchema,
   getAdGroupReportsSchema,
   getKeywordReportsSchema,
   getSearchTermReportsSchema,
+  getAdReportsSchema,
 } from "./tools/reports.js";
+
+import {
+  creativeToolDefinitions,
+  handleCreateCreative,
+  handleGetCreatives,
+  handleFindCreatives,
+  createCreativeSchema,
+  getCreativesSchema,
+  findCreativesSchema,
+} from "./tools/creatives.js";
+
+import {
+  adToolDefinitions,
+  handleCreateAd,
+  handleGetAds,
+  handleFindAds,
+  handleUpdateAd,
+  handleDeleteAd,
+  createAdSchema,
+  getAdsSchema,
+  findAdsSchema,
+  updateAdSchema,
+  deleteAdSchema,
+} from "./tools/ads.js";
+
+import {
+  productPageToolDefinitions,
+  handleGetProductPages,
+  getProductPagesSchema,
+} from "./tools/productpages.js";
+
+import {
+  budgetOrderToolDefinitions,
+  handleCreateBudgetOrder,
+  handleGetBudgetOrders,
+  handleUpdateBudgetOrder,
+  createBudgetOrderSchema,
+  getBudgetOrdersSchema,
+  updateBudgetOrderSchema,
+} from "./tools/budgetorders.js";
+
+import {
+  customReportToolDefinitions,
+  handleCreateCustomReport,
+  handleGetCustomReports,
+  createCustomReportSchema,
+  getCustomReportsSchema,
+} from "./tools/customreports.js";
 
 // ============================================
 // Account & Discovery Tool Definitions
@@ -133,7 +183,12 @@ const allToolDefinitions = [
   ...campaignToolDefinitions,
   ...adGroupToolDefinitions,
   ...keywordToolDefinitions,
+  ...creativeToolDefinitions,
+  ...adToolDefinitions,
+  ...productPageToolDefinitions,
+  ...budgetOrderToolDefinitions,
   ...reportToolDefinitions,
+  ...customReportToolDefinitions,
 ];
 
 // ============================================
@@ -314,7 +369,62 @@ async function main() {
         case "get_searchterm_reports":
           result = await handleGetSearchTermReports(client, getSearchTermReportsSchema.parse(args));
           break;
-          
+        case "get_ad_reports":
+          result = await handleGetAdReports(client, getAdReportsSchema.parse(args));
+          break;
+
+        // Creatives
+        case "create_creative":
+          result = await handleCreateCreative(client, createCreativeSchema.parse(args));
+          break;
+        case "get_creatives":
+          result = await handleGetCreatives(client, getCreativesSchema.parse(args));
+          break;
+        case "find_creatives":
+          result = await handleFindCreatives(client, findCreativesSchema.parse(args));
+          break;
+
+        // Ads
+        case "create_ad":
+          result = await handleCreateAd(client, createAdSchema.parse(args));
+          break;
+        case "get_ads":
+          result = await handleGetAds(client, getAdsSchema.parse(args));
+          break;
+        case "find_ads":
+          result = await handleFindAds(client, findAdsSchema.parse(args));
+          break;
+        case "update_ad":
+          result = await handleUpdateAd(client, updateAdSchema.parse(args));
+          break;
+        case "delete_ad":
+          result = await handleDeleteAd(client, deleteAdSchema.parse(args));
+          break;
+
+        // Custom Product Pages
+        case "get_product_pages":
+          result = await handleGetProductPages(client, getProductPagesSchema.parse(args));
+          break;
+
+        // Budget Orders
+        case "create_budget_order":
+          result = await handleCreateBudgetOrder(client, createBudgetOrderSchema.parse(args));
+          break;
+        case "get_budget_orders":
+          result = await handleGetBudgetOrders(client, getBudgetOrdersSchema.parse(args));
+          break;
+        case "update_budget_order":
+          result = await handleUpdateBudgetOrder(client, updateBudgetOrderSchema.parse(args));
+          break;
+
+        // Custom (Impression Share) Reports
+        case "create_custom_report":
+          result = await handleCreateCustomReport(client, createCustomReportSchema.parse(args));
+          break;
+        case "get_custom_reports":
+          result = await handleGetCustomReports(client, getCustomReportsSchema.parse(args));
+          break;
+
         default:
           return {
             content: [

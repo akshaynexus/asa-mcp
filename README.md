@@ -272,6 +272,38 @@ Restart Cursor completely for the MCP server to load.
 | `update_adgroup_negative_keywords` | Update negative keyword status |
 | `delete_adgroup_negative_keywords` | Delete ad group negative keywords |
 
+### Creatives
+
+| Tool | Description |
+|------|-------------|
+| `create_creative` | Create a creative wrapping a Default or Custom Product Page |
+| `get_creatives` | Get all creatives or a specific creative |
+| `find_creatives` | Search creatives with filter conditions |
+
+### Custom Product Pages
+
+| Tool | Description |
+|------|-------------|
+| `get_product_pages` | Get an app's Custom Product Pages (returns `productPageId` for creatives) |
+
+### Ads
+
+| Tool | Description |
+|------|-------------|
+| `create_ad` | Create an ad binding a creative to an ad group |
+| `get_ads` | Get all ads in an ad group or a specific ad |
+| `find_ads` | Search ads within a campaign or org-wide |
+| `update_ad` | Update an ad's name or status |
+| `delete_ad` | Delete an ad |
+
+### Budget Orders
+
+| Tool | Description |
+|------|-------------|
+| `create_budget_order` | Create a budget order (LOC/agency payment allocation) |
+| `get_budget_orders` | Get all budget orders or a specific one |
+| `update_budget_order` | Update a budget order (no delete — update instead) |
+
 ### Reports
 
 | Tool | Description |
@@ -280,6 +312,14 @@ Restart Cursor completely for the MCP server to load.
 | `get_adgroup_reports` | Ad group-level performance reports |
 | `get_keyword_reports` | Keyword-level performance reports |
 | `get_searchterm_reports` | Search term reports |
+| `get_ad_reports` | Ad-level performance reports |
+
+### Impression Share Reports
+
+| Tool | Description |
+|------|-------------|
+| `create_custom_report` | Create an async impression share report (share of voice, search popularity, rank) |
+| `get_custom_reports` | Get all impression share reports or poll one for its `downloadUri` |
 
 ---
 
