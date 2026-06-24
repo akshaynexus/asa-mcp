@@ -217,109 +217,24 @@ Restart Cursor completely for the MCP server to load.
 
 ## 🛠️ Available Tools
 
-### Account & Discovery
+The server exposes **12 focused tools**. Most are consolidated `manage_*` tools that take an `action` parameter (`create` / `get` / `find` / `update` / `delete`) instead of a separate tool per operation — fewer tools to reason about, with the same full coverage of the Apple Ads Campaign Management API v5.
 
-| Tool | Description |
-|------|-------------|
-| `get_user_acl` | Get organizations and roles the API has access to |
-| `search_apps` | Search for iOS apps to promote (returns adamId) |
-| `search_geo` | Search for targetable geographic locations |
+| Tool | `action` / params | Description |
+|------|-------------------|-------------|
+| `get_user_acl` | _(none)_ | Get organizations and roles; find your `orgId` |
+| `search` | `target: apps \| geo` | Find apps to promote (returns `adamId`) or targetable locations |
+| `manage_campaigns` | create, get, find, update, delete | Campaign lifecycle |
+| `manage_adgroups` | create, get, find, update, delete | Ad group lifecycle and targeting dimensions |
+| `manage_keywords` | create, get, find, update | Targeting keywords in an ad group |
+| `manage_negative_keywords` | `scope: campaign \| adgroup` × create, get, find, update, delete | Negative keywords at either level |
+| `manage_creatives` | create, get, find | Creatives wrapping a Default/Custom Product Page |
+| `manage_ads` | create, get, find, update, delete | Bind creatives to ad groups (find supports org-wide) |
+| `get_product_pages` | `adamId` | An app's Custom Product Pages (returns `productPageId`) |
+| `manage_budget_orders` | create, get, update | Budget orders (no delete by API design) |
+| `get_reports` | `type: campaign \| adgroup \| keyword \| searchterm \| ad` | Performance reports at any level |
+| `manage_custom_reports` | create, get | Async Impression Share reports (share of voice, rank) |
 
-### Campaigns
-
-| Tool | Description |
-|------|-------------|
-| `create_campaign` | Create a new campaign |
-| `get_campaigns` | Get all campaigns or a specific campaign |
-| `find_campaigns` | Search campaigns with filter conditions |
-| `update_campaign` | Update campaign settings |
-| `delete_campaign` | Delete a campaign |
-
-### Ad Groups
-
-| Tool | Description |
-|------|-------------|
-| `create_adgroup` | Create an ad group with targeting dimensions |
-| `get_adgroups` | Get ad groups in a campaign |
-| `find_adgroups` | Search ad groups with filters |
-| `update_adgroup` | Update ad group settings and targeting |
-| `delete_adgroup` | Delete an ad group |
-
-### Targeting Keywords
-
-| Tool | Description |
-|------|-------------|
-| `create_targeting_keywords` | Add keywords to an ad group |
-| `get_targeting_keywords` | Get keywords for an ad group |
-| `find_targeting_keywords` | Search keywords across ad groups |
-| `update_targeting_keywords` | Update keyword bids and status |
-
-### Negative Keywords (Campaign Level)
-
-| Tool | Description |
-|------|-------------|
-| `create_campaign_negative_keywords` | Add negative keywords to campaign |
-| `get_campaign_negative_keywords` | Get campaign negative keywords |
-| `update_campaign_negative_keywords` | Update negative keyword status |
-| `delete_campaign_negative_keywords` | Delete campaign negative keywords |
-
-### Negative Keywords (Ad Group Level)
-
-| Tool | Description |
-|------|-------------|
-| `create_adgroup_negative_keywords` | Add negative keywords to ad group |
-| `get_adgroup_negative_keywords` | Get ad group negative keywords |
-| `update_adgroup_negative_keywords` | Update negative keyword status |
-| `delete_adgroup_negative_keywords` | Delete ad group negative keywords |
-
-### Creatives
-
-| Tool | Description |
-|------|-------------|
-| `create_creative` | Create a creative wrapping a Default or Custom Product Page |
-| `get_creatives` | Get all creatives or a specific creative |
-| `find_creatives` | Search creatives with filter conditions |
-
-### Custom Product Pages
-
-| Tool | Description |
-|------|-------------|
-| `get_product_pages` | Get an app's Custom Product Pages (returns `productPageId` for creatives) |
-
-### Ads
-
-| Tool | Description |
-|------|-------------|
-| `create_ad` | Create an ad binding a creative to an ad group |
-| `get_ads` | Get all ads in an ad group or a specific ad |
-| `find_ads` | Search ads within a campaign or org-wide |
-| `update_ad` | Update an ad's name or status |
-| `delete_ad` | Delete an ad |
-
-### Budget Orders
-
-| Tool | Description |
-|------|-------------|
-| `create_budget_order` | Create a budget order (LOC/agency payment allocation) |
-| `get_budget_orders` | Get all budget orders or a specific one |
-| `update_budget_order` | Update a budget order (no delete — update instead) |
-
-### Reports
-
-| Tool | Description |
-|------|-------------|
-| `get_campaign_reports` | Campaign-level performance reports |
-| `get_adgroup_reports` | Ad group-level performance reports |
-| `get_keyword_reports` | Keyword-level performance reports |
-| `get_searchterm_reports` | Search term reports |
-| `get_ad_reports` | Ad-level performance reports |
-
-### Impression Share Reports
-
-| Tool | Description |
-|------|-------------|
-| `create_custom_report` | Create an async impression share report (share of voice, search popularity, rank) |
-| `get_custom_reports` | Get all impression share reports or poll one for its `downloadUri` |
+> **How `action` works:** each tool validates only the fields relevant to the chosen action. For example, `manage_campaigns` with `action: "create"` requires `name`, `adamId`, `countriesOrRegions`, `budgetAmount`, and `currency`, while `action: "delete"` only requires `campaignId`. Invalid combinations return a clear validation error.
 
 ---
 
@@ -404,6 +319,38 @@ docker run -it --rm \
 # Stop containers
 docker compose down
 ```
+
+---
+
+## 🧱 Development & Architecture
+
+```
+src/
+  index.ts            # thin entry: build client provider, register tools, start stdio server
+  auth.ts             # OAuth (ES256 JWT → access token, cached)
+  client.ts           # typed Apple Ads REST client (one method per endpoint)
+  mcp/
+    schema.ts         # shared zod fragments + helpers (buildSelector, money, requireFields, zodToInputSchema)
+    registry.ts       # ToolDescriptor + registerTools (validation, errors, serialization)
+  tools/
+    index.ts          # aggregates every tool into `allTools`
+    *.ts              # one file per resource, each exporting ToolDescriptor[]
+test/                 # node:test unit tests (run with tsx)
+```
+
+Key ideas that keep the code DRY and testable:
+
+- **One schema per tool.** Tools declare a single `zod` schema; the MCP `inputSchema` is generated from it (`zodToInputSchema`) — no more hand-written JSON Schema duplicated alongside zod.
+- **Registry instead of a switch.** `registerTools` centralizes argument validation, credential checks, error formatting, and JSON serialization, so each handler is a small pure function `(client, args) => data`.
+- **Consolidated `manage_*` tools.** Per-action required fields are enforced with `requireFields` in a `superRefine`, so one tool safely covers create/get/find/update/delete.
+
+```bash
+npm run build       # compile to dist/
+npm test            # run unit tests (tsx + node:test)
+npm run typecheck   # type-check without emitting
+```
+
+Handlers are tested by validating against the real tool schema and dispatching to a recording mock client (`test/helpers.ts`) — no network or credentials required.
 
 ---
 
