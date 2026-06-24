@@ -577,6 +577,205 @@ export class AppleAdsClient {
   }): Promise<ApiResponse<unknown>> {
     return this.post(`/reports/campaigns/${campaignId}/searchterms`, params);
   }
+
+  /**
+   * Get ad level reports
+   */
+  async getAdReports(campaignId: number, params: {
+    startTime: string;
+    endTime: string;
+    selector?: Selector;
+    groupBy?: string[];
+    timeZone?: string;
+    granularity?: "HOURLY" | "DAILY" | "WEEKLY" | "MONTHLY";
+    returnRowTotals?: boolean;
+    returnGrandTotals?: boolean;
+    returnRecordsWithNoMetrics?: boolean;
+  }): Promise<ApiResponse<unknown>> {
+    return this.post(`/reports/campaigns/${campaignId}/ads`, params);
+  }
+
+  // ============================================
+  // Creative Methods
+  // ============================================
+
+  /**
+   * Create a creative (wraps a Default or Custom Product Page)
+   */
+  async createCreative(creative: {
+    adamId: number;
+    name: string;
+    type: "DEFAULT_PRODUCT_PAGE" | "CUSTOM_PRODUCT_PAGE";
+    productPageId?: string;
+  }): Promise<ApiResponse<{ id: number }>> {
+    return this.post("/creatives", creative);
+  }
+
+  /**
+   * Get creatives (all, or a specific creative by ID)
+   */
+  async getCreatives(creativeId?: number): Promise<ApiResponse<unknown>> {
+    const endpoint = creativeId ? `/creatives/${creativeId}` : "/creatives";
+    return this.get(endpoint);
+  }
+
+  /**
+   * Find creatives with selector
+   */
+  async findCreatives(selector?: Selector): Promise<ApiResponse<unknown[]>> {
+    return this.post("/creatives/find", selector || {});
+  }
+
+  // ============================================
+  // Ad Methods (bind a creative to an ad group)
+  // ============================================
+
+  /**
+   * Create an ad
+   */
+  async createAd(campaignId: number, adGroupId: number, ad: {
+    creativeId: number;
+    name?: string;
+    status?: "ENABLED" | "PAUSED";
+  }): Promise<ApiResponse<{ id: number }>> {
+    return this.post(`/campaigns/${campaignId}/adgroups/${adGroupId}/ads`, ad);
+  }
+
+  /**
+   * Get ads (all in ad group, or a specific ad by ID)
+   */
+  async getAds(campaignId: number, adGroupId: number, adId?: number): Promise<ApiResponse<unknown>> {
+    const endpoint = adId
+      ? `/campaigns/${campaignId}/adgroups/${adGroupId}/ads/${adId}`
+      : `/campaigns/${campaignId}/adgroups/${adGroupId}/ads`;
+    return this.get(endpoint);
+  }
+
+  /**
+   * Find ads within a campaign with selector
+   */
+  async findAds(campaignId: number, selector?: Selector): Promise<ApiResponse<unknown[]>> {
+    return this.post(`/campaigns/${campaignId}/ads/find`, selector || {});
+  }
+
+  /**
+   * Find ads org-wide with selector
+   */
+  async findAdsOrgWide(selector?: Selector): Promise<ApiResponse<unknown[]>> {
+    return this.post("/ads/find", selector || {});
+  }
+
+  /**
+   * Update an ad
+   */
+  async updateAd(campaignId: number, adGroupId: number, adId: number, updates: {
+    name?: string;
+    status?: "ENABLED" | "PAUSED";
+  }): Promise<ApiResponse<unknown>> {
+    return this.put(`/campaigns/${campaignId}/adgroups/${adGroupId}/ads/${adId}`, updates);
+  }
+
+  /**
+   * Delete an ad
+   */
+  async deleteAd(campaignId: number, adGroupId: number, adId: number): Promise<ApiResponse<unknown>> {
+    return this.delete(`/campaigns/${campaignId}/adgroups/${adGroupId}/ads/${adId}`);
+  }
+
+  // ============================================
+  // Custom Product Page Methods (read-only)
+  // ============================================
+
+  /**
+   * Get product pages for an app (custom product pages are created in App Store Connect)
+   */
+  async getProductPages(adamId: number, options?: {
+    name?: string;
+    states?: "HIDDEN" | "VISIBLE";
+    productPageId?: string;
+  }): Promise<ApiResponse<unknown>> {
+    if (options?.productPageId) {
+      return this.get(`/apps/${adamId}/product-pages/${options.productPageId}`);
+    }
+    const params: Record<string, string> = {};
+    if (options?.name) params.name = options.name;
+    if (options?.states) params.states = options.states;
+    return this.get(`/apps/${adamId}/product-pages`, params);
+  }
+
+  // ============================================
+  // Budget Order Methods
+  // ============================================
+
+  /**
+   * Create a budget order
+   */
+  async createBudgetOrder(orgIds: number[], bo: {
+    name: string;
+    startDate: string;
+    endDate: string;
+    budget: { amount: string; currency: string };
+    orderNumber?: string;
+    clientName?: string;
+    primaryBuyerName?: string;
+    primaryBuyerEmail?: string;
+    billingEmail?: string;
+  }): Promise<ApiResponse<{ id: number }>> {
+    return this.post("/budgetorders", { orgIds, bo });
+  }
+
+  /**
+   * Get budget orders (all, or a specific budget order by ID)
+   */
+  async getBudgetOrders(budgetOrderId?: number): Promise<ApiResponse<unknown>> {
+    const endpoint = budgetOrderId ? `/budgetorders/${budgetOrderId}` : "/budgetorders";
+    return this.get(endpoint);
+  }
+
+  /**
+   * Update a budget order
+   */
+  async updateBudgetOrder(budgetOrderId: number, bo: {
+    name?: string;
+    startDate?: string;
+    endDate?: string;
+    budget?: { amount: string; currency: string };
+    orderNumber?: string;
+    clientName?: string;
+    primaryBuyerName?: string;
+    primaryBuyerEmail?: string;
+    billingEmail?: string;
+  }): Promise<ApiResponse<unknown>> {
+    return this.put(`/budgetorders/${budgetOrderId}`, { bo });
+  }
+
+  // ============================================
+  // Custom (Impression Share) Report Methods
+  // ============================================
+
+  /**
+   * Create a custom impression share report (async — poll with getCustomReport for downloadUri)
+   */
+  async createCustomReport(report: {
+    name: string;
+    granularity?: "DAILY" | "WEEKLY";
+    startTime?: string;
+    endTime?: string;
+    dateRange?: "LAST_WEEK" | "LAST_2_WEEKS" | "LAST_4_WEEKS";
+    selector?: {
+      conditions?: Array<{ field: string; operator: string; values: Array<string | number> }>;
+    };
+  }): Promise<ApiResponse<{ id: number }>> {
+    return this.post("/custom-reports", report);
+  }
+
+  /**
+   * Get custom reports (all, or a specific report by ID — includes downloadUri when ready)
+   */
+  async getCustomReports(reportId?: number): Promise<ApiResponse<unknown>> {
+    const endpoint = reportId ? `/custom-reports/${reportId}` : "/custom-reports";
+    return this.get(endpoint);
+  }
 }
 
 /**
