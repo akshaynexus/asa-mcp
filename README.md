@@ -10,7 +10,7 @@
 
 **Connect your AI assistant to Apple Search Ads**
 
-Manage campaigns, ad groups, keywords, and reports — all through natural language.
+Manage campaigns, ad groups, keywords, ads, creatives, budgets, and reports — all through natural language. Full Apple Ads Campaign Management API v5 coverage in **12 focused tools**.
 
 [Getting Started](#quick-start) · [Available Tools](#available-tools) · [Usage Examples](#usage-examples) · [Troubleshooting](#troubleshooting)
 
@@ -22,11 +22,15 @@ Manage campaigns, ad groups, keywords, and reports — all through natural langu
 
 | Feature | Description |
 |---------|-------------|
-| 📊 **Campaign Management** | Create, read, update, and delete campaigns |
+| 📊 **Campaign Management** | Create, read, find, update, and delete campaigns |
 | 🎯 **Ad Group Targeting** | Configure age, gender, device, location, and daypart targeting |
 | 🔑 **Keyword Management** | Manage targeting keywords and negative keywords at all levels |
-| 📈 **Performance Reports** | Generate reports at campaign, ad group, keyword, and search term levels |
+| 🖼️ **Ads & Creatives** | Manage creatives, Custom Product Pages, and ads that bind them to ad groups |
+| 💳 **Budget Orders** | Create and manage budget orders for LOC/agency accounts |
+| 📈 **Performance Reports** | Reports at campaign, ad group, keyword, search term, and ad levels |
+| 🥇 **Impression Share** | Async share-of-voice, search popularity, and rank reports |
 | 🔐 **Secure Auth** | OAuth 2.0 JWT-based authentication with automatic token refresh |
+| 🧩 **Consolidated Tools** | One `manage_*` tool per resource with an `action` param — 12 tools, not 40+ |
 
 ## 📋 Prerequisites
 
@@ -39,7 +43,7 @@ Manage campaigns, ad groups, keywords, and reports — all through natural langu
 ### Option A: Run with Node.js
 
 ```bash
-git clone https://github.com/yourusername/asa-mcp.git
+git clone https://github.com/akshaynexus/asa-mcp.git
 cd asa-mcp
 npm install
 npm run build
@@ -48,7 +52,7 @@ npm run build
 ### Option B: Run with Docker
 
 ```bash
-git clone https://github.com/yourusername/asa-mcp.git
+git clone https://github.com/akshaynexus/asa-mcp.git
 cd asa-mcp
 npm install
 npm run build
@@ -155,12 +159,13 @@ APPLE_ADS_ORG_ID=123456789
 </details>
 
 <details>
-<summary><strong>Step 7: Configure Cursor</strong></summary>
+<summary><strong>Step 7: Configure your MCP client</strong></summary>
 
-Add to your Cursor MCP settings file:
+Add the server to your MCP client config. The same `mcpServers` block works for any MCP client — Cursor, Claude Desktop, or Claude Code:
 
-**macOS**: `~/.cursor/mcp.json`
-**Windows**: `%APPDATA%\Cursor\mcp.json`
+- **Cursor** — `~/.cursor/mcp.json` (macOS) · `%APPDATA%\Cursor\mcp.json` (Windows)
+- **Claude Desktop** — `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) · `%APPDATA%\Claude\claude_desktop_config.json` (Windows)
+- **Claude Code** — run `claude mcp add` or edit `~/.claude.json`
 
 #### Using Node.js directly:
 
@@ -207,9 +212,9 @@ Add to your Cursor MCP settings file:
 </details>
 
 <details>
-<summary><strong>Step 8: Restart Cursor</strong></summary>
+<summary><strong>Step 8: Restart your MCP client</strong></summary>
 
-Restart Cursor completely for the MCP server to load.
+Restart your MCP client (Cursor, Claude Desktop, or Claude Code) completely for the server to load.
 
 </details>
 
@@ -240,18 +245,26 @@ The server exposes **12 focused tools**. Most are consolidated `manage_*` tools 
 
 ## 💬 Usage Examples
 
-Once configured, you can ask Claude in Cursor to manage your campaigns:
+Once configured, you can ask your AI assistant (Cursor, Claude Desktop, or Claude Code) to manage your account in plain language — it picks the right tool and `action` for you:
 
 ```
-📊 "Show me how my campaigns performed last week"
+📊 "Show me how my campaigns performed last week"            → get_reports (type: campaign)
 
-🚀 "Create a new campaign for my app (adamId: 123456789) targeting US and Canada with a $1000 budget"
+🚀 "Create a campaign for my app (adamId: 123456789)          → manage_campaigns (action: create)
+    targeting US and Canada with a $1000 budget"
 
-🔑 "Add these keywords to my campaign: fitness app, workout tracker, exercise planner"
+🔑 "Add these keywords to my ad group: fitness app,          → manage_keywords (action: create)
+    workout tracker, exercise planner"
 
-⏸️ "Find keywords with CTR below 1% and pause them"
+⏸️ "Find keywords with CTR below 1% and pause them"          → manage_keywords (find + update)
 
-🔍 "Show me the search terms report for my campaign to find new keyword opportunities"
+🔍 "Show me the search terms report to find new keywords"    → get_reports (type: searchterm)
+
+🖼️ "Create a creative from my Custom Product Page and run    → manage_creatives + manage_ads
+    an ad for it in ad group 42"
+
+🥇 "Pull an impression share report for the US over the      → manage_custom_reports (action: create)
+    last 4 weeks"
 ```
 
 ---
@@ -263,7 +276,7 @@ Once configured, you can ask Claude in Cursor to manage your campaigns:
 
 - Make sure all 5 environment variables are set
 - Check that `APPLE_ADS_PRIVATE_KEY_PATH` is an absolute path
-- Restart Cursor after changing the MCP config
+- Restart your MCP client after changing the MCP config
 
 </details>
 
